@@ -1,4 +1,5 @@
 // http://stackoverflow.com/questions/37316156/how-to-debounce-user-input-in-reactjs-using-rxjs
+// http://stackoverflow.com/questions/29858674/rxjs-dynamically-add-events-from-another-eventemitter
 
 import React, {Component} from 'react';
 import {bindActionCreators} from 'redux';
@@ -8,12 +9,27 @@ import Rx from 'rxjs';
 import {receiveGreeting} from './redux-things';
 import {apiIncrementalGreeting} from './api';
 
+import {EventEmitter} from 'events';
+const emitter = new EventEmitter();
+
 let counter = 0;
 class App extends Component {
   constructor(props) {
     super(props);
     this.handleGenerateGreeting = this.handleGenerateGreeting.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
+
+    this.cancelEvents = Rx.Observable.create(observer => {
+      const handler = d => {
+        console.log('emmit', d);
+        observer.next(d);
+      };
+      emitter.on('data', handler);
+      return () => {
+        console.log('disposed');
+        emitter.removeListener('on', handler);
+      };
+    });
   }
 
   componentDidMount() {
@@ -24,7 +40,7 @@ class App extends Component {
         apiIncrementalGreeting(params)
           .map(res => res.greeting)
           .do(this.props.receiveGreeting)
-          .takeUntil(this.cancelButtonClicks)
+          .takeUntil(this.cancelEvents)
       );
 
     this.rxSubject.subscribe(greeting => {
@@ -51,6 +67,7 @@ class App extends Component {
 
   handleCancel(e) {
     console.log('handleCancel');
+    emitter.emit('data', 'cancel event');
   }
 }
 
