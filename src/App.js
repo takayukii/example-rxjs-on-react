@@ -27,13 +27,12 @@ class App extends Component {
       emitter.on('data', handler);
       return () => {
         console.log('disposed');
-        emitter.removeListener('on', handler);
+        emitter.removeAllListeners();
       };
     });
   }
 
   componentDidMount() {
-    this.cancelButtonClicks = Rx.Observable.fromEvent(document.getElementById('cancel-button'), 'click');
     this.rxSubject = new Rx.Subject()
       .debounceTime(1000)
       .switchMap(params =>
@@ -54,7 +53,7 @@ class App extends Component {
         <div className="jumbotron">
           <h3>{this.props.greeting}</h3>
           <button onClick={this.handleGenerateGreeting}>Generate super greeting</button>
-          <button id="cancel-button" onClick={this.handleCancel}>Cancel it!</button>
+          <button onClick={this.handleCancel}>Cancel it!</button>
         </div>
       </div>
     );
